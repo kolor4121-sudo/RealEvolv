@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://5wvrp2i0d6gc"]
+
+[ext_resource type="Script" uid="uid://datvc4x0gmpqx" path="res://scripts/world_map.gd" id="1_l4t7d"]
+
+[node name="WorldMap" type="Node2D" unique_id=1089574150]
+script = ExtResource("1_l4t7d")
+map_width = 150
+map_height = 150
+tree_density_multiplier = 2.5
+bush_density_multiplier = 1.7
+rock_density_multiplier = 2.0
+tree_wood_yield = 3
+rock_stone_yield = 3
+tree_regrow_time = 30.0
+rock_respawn_time = 40.0
+tree_regrow_chance = 0.4
+rock_respawn_chance = 0.4
+max_npc_count = 100
+npc_hunger_decay = 0.5
+npc_thirst_decay = 0.6
+
+[node name="TerrainLayer" type="TileMapLayer" parent="." unique_id=550770636]
+
+[node name="Objects" type="Node2D" parent="." unique_id=642788593]
+y_sort_enabled = true
+
+[node name="Characters" type="Node2D" parent="." unique_id=604834551]
+y_sort_enabled = true
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=197610376]
+zoom = Vector2(0.68, 0.68)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2065171792]
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer" unique_id=1841131912]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 430.0
+offset_bottom = 176.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/PanelContainer" unique_id=1446378928]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="CanvasLayer/PanelContainer/MarginContainer" unique_id=1136040512]
+layout_mode = 2
+text = "Generating world..."
+autowrap_mode = 3
+
+[node name="NpcCard" type="PanelContainer" parent="CanvasLayer" unique_id=2018330192]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -332.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 340.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/NpcCard" unique_id=1969829174]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="CanvasLayer/NpcCard/MarginContainer" unique_id=1181608739]
+layout_mode = 2
+text = "Villager info"
+autowrap_mode = 3
