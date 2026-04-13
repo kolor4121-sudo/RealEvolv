@@ -149,6 +149,9 @@ var _barn_supply_mode := ""
 var _stuck_timer := 0.0
 var _last_progress_cell := INVALID_CELL
 var _last_progress_signature := ""
+var _last_visited_cell := INVALID_CELL
+var _cell_before_last := INVALID_CELL
+var _oscillation_count := 0
 var _tree_query_cooldown := 0.0
 var _rock_query_cooldown := 0.0
 var _food_query_cooldown := 0.0
@@ -225,6 +228,9 @@ func setup(start_cell: Vector2i, world_ref, seed_value: int, npc_index: int, ini
 	spawn_cell = start_cell
 	current_cell = start_cell
 	_last_progress_cell = start_cell
+	_last_visited_cell = start_cell
+	_cell_before_last = INVALID_CELL
+	_oscillation_count = 0
 	position = _cell_to_position(start_cell)
 	_rng.seed = int(seed_value) + npc_index * 9973
 	hunger = _rng.randf_range(88.0, NEED_MAX)
@@ -378,6 +384,9 @@ func _force_rethink() -> void:
 	upgrade_target_cell = INVALID_CELL
 	_action_timer = 0.0
 	_moving = false
+	_oscillation_count = 0
+	_cell_before_last = INVALID_CELL
+	_last_visited_cell = current_cell
 	_state = WandererState.DECIDE
 	_idle_timer = 0.0
 	if sprite != null:
@@ -1225,7 +1234,18 @@ func _update_movement(delta: float) -> void:
 	current_cell = step_target_cell
 	world.call("update_npc_cell", npc_id, previous_cell, current_cell)
 	_moving = false
+	if current_cell == _cell_before_last:
+		_oscillation_count += 1
+	else:
+		_oscillation_count = 0
 
+	_cell_before_last = _last_visited_cell
+	_last_visited_cell = current_cell
+
+	if _oscillation_count >= 3:
+		_release_claims_for_target()
+		_force_rethink()
+		return
 	if _should_interrupt_for_survival():
 		_release_claims_for_target()
 		_state = WandererState.DECIDE
