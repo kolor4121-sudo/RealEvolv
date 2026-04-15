@@ -152,6 +152,9 @@ var _last_progress_signature := ""
 var _last_visited_cell := INVALID_CELL
 var _cell_before_last := INVALID_CELL
 var _oscillation_count := 0
+var _no_progress_steps := 0
+var _tracked_target_cell := INVALID_CELL
+var _best_target_distance_sq := INF
 var _tree_query_cooldown := 0.0
 var _rock_query_cooldown := 0.0
 var _food_query_cooldown := 0.0
@@ -231,6 +234,9 @@ func setup(start_cell: Vector2i, world_ref, seed_value: int, npc_index: int, ini
 	_last_visited_cell = start_cell
 	_cell_before_last = INVALID_CELL
 	_oscillation_count = 0
+	_no_progress_steps = 0
+	_tracked_target_cell = INVALID_CELL
+	_best_target_distance_sq = INF
 	position = _cell_to_position(start_cell)
 	_rng.seed = int(seed_value) + npc_index * 9973
 	hunger = _rng.randf_range(88.0, NEED_MAX)
@@ -387,6 +393,9 @@ func _force_rethink() -> void:
 	_oscillation_count = 0
 	_cell_before_last = INVALID_CELL
 	_last_visited_cell = current_cell
+	_no_progress_steps = 0
+	_tracked_target_cell = INVALID_CELL
+	_best_target_distance_sq = INF
 	_state = WandererState.DECIDE
 	_idle_timer = 0.0
 	if sprite != null:
@@ -1206,12 +1215,25 @@ func _move_towards_target(allow_tree_target: bool) -> void:
 		_arrive_at_target()
 		return
 
+	if _tracked_target_cell != target_cell:
+		_tracked_target_cell = target_cell
+		_best_target_distance_sq = current_cell.distance_squared_to(target_cell)
+		_no_progress_steps = 0
+
 	step_target_cell = world.call("find_next_step", current_cell, target_cell, allow_tree_target)
 	if step_target_cell == INVALID_CELL:
 		_release_claims_for_target()
 		_state = WandererState.DECIDE
 		_idle_timer = _rng.randf_range(0.1, 0.25)
 		return
+
+	if step_target_cell == _cell_before_last and target_cell != _cell_before_last:
+		_oscillation_count += 1
+		if _oscillation_count >= 2:
+			_release_claims_for_target()
+			_force_rethink()
+			_set_retry_pause(0.12, 0.24)
+			return
 
 	_start_move_to(step_target_cell)
 
@@ -1246,6 +1268,22 @@ func _update_movement(delta: float) -> void:
 		_release_claims_for_target()
 		_force_rethink()
 		return
+	if target_cell != INVALID_CELL:
+		var target_distance_sq := current_cell.distance_squared_to(target_cell)
+		if _tracked_target_cell != target_cell:
+			_tracked_target_cell = target_cell
+			_best_target_distance_sq = target_distance_sq
+			_no_progress_steps = 0
+		elif target_distance_sq + 0.001 < _best_target_distance_sq:
+			_best_target_distance_sq = target_distance_sq
+			_no_progress_steps = 0
+		else:
+			_no_progress_steps += 1
+			if _no_progress_steps >= 8:
+				_release_claims_for_target()
+				_force_rethink()
+				_set_retry_pause(0.14, 0.28)
+				return
 	if _should_interrupt_for_survival():
 		_release_claims_for_target()
 		_state = WandererState.DECIDE
